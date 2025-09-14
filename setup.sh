@@ -43,7 +43,7 @@ pacman -Syu --noconfirm --needed \
     amd-ucode intel-ucode \
     mesa lib32-mesa vulkan-intel lib32-vulkan-intel vulkan-radeon lib32-vulkan-radeon nvidia nvidia-utils lib32-nvidia-utils \
     pipewire pipewire-pulse pipewire-alsa \
-    retroarch openbox xorg-server xorg-xinit alacritty firefox
+    retroarch openbox xorg-server xorg-xinit alacritty firefox nautilus
 
 
 echo "INFO: Re-installing GRUB for portability..."
