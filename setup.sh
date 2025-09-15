@@ -4,30 +4,37 @@
 # POST-INSTALLATION SCRIPT FOR A PORTABLE ARCH LINUX SYSTEM FOR RETRO GAMES
 # ===================================================================================
 
+# Define colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
 
 if [[ $EUID -ne 0 ]]; then
-   echo "ERROR: This script must be run with sudo." 
-   exit 1
+  printf "${RED}ERROR: This script must be run with sudo.${NC}\n"
+  exit 1
 fi
 
 if [[ -z "$SUDO_USER" ]]; then
-    REAL_USER=$(logname)
+  REAL_USER=$(logname)
 else
-    REAL_USER=$SUDO_USER
+  REAL_USER=$SUDO_USER
 fi
 
 if [[ -z "$REAL_USER" ]]; then
-    echo "ERROR: Could not determine the user."
-    exit 1
+  printf "${RED}ERROR: Could not determine the user.${NC}\n"
+  exit 1
 fi
 
-echo "INFO: Running setup for user: $REAL_USER..."
+printf "${BLUE}INFO: Running setup for user: ${YELLOW}%s...${NC}\n" "$REAL_USER"
 HOME_DIR="/home/$REAL_USER"
 
-echo "INFO: Installing reflector to get the best mirrors..."
+printf "${BLUE}INFO: Installing reflector to get the best mirrors...${NC}\n"
 pacman -S --noconfirm --needed reflector
 
-echo "INFO: Optimizing mirrorlist for the current location..."
+printf "${BLUE}INFO: Optimizing mirrorlist for the current location...${NC}\n"
 reflector \
   --verbose \
   --protocol https \
@@ -37,56 +44,55 @@ reflector \
   --number 5 \
   --save /etc/pacman.d/mirrorlist
 
-echo "INFO: Installing packages from the official repositories..."
+printf "${BLUE}INFO: Installing packages from the official repositories...${NC}\n"
 pacman -Syu --noconfirm --needed \
-    git base-devel \
-    amd-ucode intel-ucode \
-    mesa lib32-mesa vulkan-intel lib32-vulkan-intel vulkan-radeon lib32-vulkan-radeon nvidia nvidia-utils lib32-nvidia-utils \
-    pipewire pipewire-pulse pipewire-alsa \
-    retroarch openbox xorg-server xorg-xinit alacritty firefox nautilus
+  git base-devel \
+  amd-ucode intel-ucode \
+  mesa lib32-mesa vulkan-intel lib32-vulkan-intel vulkan-radeon lib32-vulkan-radeon nvidia nvidia-utils lib32-nvidia-utils \
+  pipewire pipewire-pulse pipewire-alsa \
+  retroarch openbox xorg-server xorg-xinit alacritty firefox nautilus
 
 
-echo "INFO: Re-installing GRUB for portability..."
+printf "${BLUE}INFO: Re-installing GRUB for portability...${NC}\n"
 grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=GRUB --removable
 
-# WARNING: For encrypted systems, manually add the 'cryptdevice' boot
-# parameter to /etc/default/grub before generating the config.
+printf "${YELLOW}WARNING: For encrypted systems, manually add the 'cryptdevice' boot parameter to /etc/default/grub before generating the config.${NC}\n"
 
-echo "INFO: Generating GRUB configuration..."
+printf "${BLUE}INFO: Generating GRUB configuration...${NC}\n"
 grub-mkconfig -o /boot/grub/grub.cfg
 
 
-echo "INFO: Installing yay (AUR Helper)..."
+printf "${BLUE}INFO: Installing yay (AUR Helper)...${NC}\n"
 sudo -u $REAL_USER bash -c '
-    cd /tmp
-    git clone https://aur.archlinux.org/yay.git
-    cd yay
-    makepkg -si --noconfirm
-    cd -
-    rm -rf yay
+  cd /tmp
+  git clone https://aur.archlinux.org/yay.git
+  cd yay
+  makepkg -si --noconfirm
+  cd -
+  rm -rf yay
 '
 
-echo "INFO: Using yay to install EmulationStation-DE..."
+printf "${BLUE}INFO: Using yay to install EmulationStation-DE...${NC}\n"
 sudo -u $REAL_USER yay -S --noconfirm emulationstation-de
 
 
-echo "INFO: Copying configuration files to the user's home directory..."
+printf "${BLUE}INFO: Copying configuration files to the user's home directory...${NC}\n"
 SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null && pwd)
 
-echo "INFO: Creating default .config/ folder..."
+printf "${BLUE}INFO: Creating default .config/ folder...${NC}\n"
 sudo -u $REAL_USER mkdir -p $HOME_DIR/.config
 
-echo "INFO: Copying all default configuration files..."
+printf "${BLUE}INFO: Copying all default configuration files...${NC}\n"
 sudo -u $REAL_USER cp -r $SCRIPT_DIR/dotfiles/.* $HOME_DIR/
 sudo -u $REAL_USER cp -r $SCRIPT_DIR/dotfiles/.config/* $HOME_DIR/.config/
 
-echo "INFO: Ensuring correct ownership of all files in home directory..."
+printf "${BLUE}INFO: Ensuring correct ownership of all files in home directory...${NC}\n"
 chown -R $REAL_USER:$REAL_USER $HOME_DIR
 
 
-echo "INFO: Enabling essential services..."
+printf "${BLUE}INFO: Enabling essential services...${NC}\n"
 systemctl enable NetworkManager.service
 
-echo "-------------------------------------------------------------"
-echo "INFO: Setup complete! You can now reboot the system."
-echo "-------------------------------------------------------------"
+printf "${GREEN}-------------------------------------------------------------${NC}\n"
+printf "${GREEN}INFO: Setup complete! You can now reboot the system.${NC}\n"
+printf "${GREEN}-------------------------------------------------------------${NC}\n"
