@@ -31,6 +31,19 @@ fi
 printf "${BLUE}INFO: Running setup for user: ${YELLOW}%s...${NC}\n" "$REAL_USER"
 HOME_DIR="/home/$REAL_USER"
 
+
+printf "${BLUE}INFO: Enabling the [multilib] repository...${NC}\n"
+if grep -q "^\[multilib\]" /etc/pacman.conf; then
+    printf "${GREEN}INFO: [multilib] repository is already enabled.${NC}\n"
+else
+    sudo sed -i "/^#\[multilib\]/,/^#Include/s/^#//" /etc/pacman.conf
+    printf "${GREEN}SUCCESS: [multilib] repository has been enabled.${NC}\n"
+fi
+
+printf "${BLUE}INFO: Synchronizing package databases...${NC}\n"
+sudo pacman -Syu
+
+
 printf "${BLUE}INFO: Installing reflector to get the best mirrors...${NC}\n"
 pacman -S --noconfirm --needed reflector
 
@@ -43,6 +56,7 @@ reflector \
   --sort rate \
   --number 5 \
   --save /etc/pacman.d/mirrorlist
+
 
 printf "${BLUE}INFO: Installing packages from the official repositories...${NC}\n"
 pacman -Syu --noconfirm --needed \
@@ -70,6 +84,7 @@ sudo -u $REAL_USER bash -c '
   makepkg -si --noconfirm
   cd -
   rm -rf yay
+  cd ~
 '
 
 printf "${BLUE}INFO: Using yay to install EmulationStation-DE...${NC}\n"
